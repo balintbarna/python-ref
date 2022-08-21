@@ -1,5 +1,5 @@
 # external
-from typing import Any
+from typing import Any, Callable, List
 from pytest import raises
 # local
 from refcontainer import Ref, ReadOnlyError
@@ -72,5 +72,17 @@ def test_empty_constructor():
         _ = num_ref.current
     num_ref.current = 0.
     assert num_ref.current == 0
+    with raises(TypeError):
+        num_ref.current = 'hello'
+
+
+def test_typing_lib():
+    num_ref = Ref[List]()
+    num_ref.current = []
+    with raises(TypeError):
+        num_ref.current = 'hello'
+    num_ref = Ref[Callable]()
+    num_ref.current = lambda: 'hello'
+    assert num_ref.current() == 'hello'
     with raises(TypeError):
         num_ref.current = 'hello'
