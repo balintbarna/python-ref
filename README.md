@@ -12,7 +12,7 @@ from refcontainer import Ref, ReadOnlyError
 # Initialize with value
 str_ref = Ref('hello')
 assert str_ref.current == 'hello'
-str_ref.clear()
+del str_ref.current
 _ = str_ref.current  # raises AttributeError
 
 str_ref.current = 'world'
@@ -24,7 +24,7 @@ str_ref.current = 'world'  # raises ReadOnlyError
 
 # Initialize as readonly (engraved)
 str_ref = Ref.readonly('hello')
-str_ref.clear()  # raises ReadOnlyError
+del str_ref.current  # raises ReadOnlyError
 assert str_ref.current == 'hello'
 
 # Initialize with type tags
