@@ -4,7 +4,7 @@ This library implements a simple container which holds a single value.
 The container is completely typed, supports an optional default value,
 supports readonly mode, and does runtime type checking.
 
-Examples:
+## Examples
 
 ```python
 from refcontainer import Ref, ReadOnlyError
@@ -45,4 +45,34 @@ with raises(AttributeError):
 num_ref.current = 0.
 assert num_ref.current == 0
 num_ref.current = 'hello'  # raises TypeError
+```
+
+## Installation
+
+From PyPI:
+
+```
+pip install refcontainer
+```
+
+From source:
+
+```
+git clone git@github.com:balintmaci/python-ref.git
+cd python-ref
+pip install .
+```
+
+> Use `-e` with install to link sources to installation
+
+Build:
+
+```
+python -m build .
+```
+
+Push to PyPI:
+
+```
+python3 -m twine upload --repository pypi dist/*
 ```
