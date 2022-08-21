@@ -16,9 +16,9 @@ def test_overwrite():
     assert str_ref.current == 'world'
 
 
-def test_clear():
+def test_delete():
     str_ref = Ref('hello')
-    str_ref.clear()
+    del str_ref.current
     with raises(AttributeError):
         _ = str_ref.current
     str_ref.current = 'world'
@@ -31,7 +31,7 @@ def test_engrave():
     with raises(ReadOnlyError):
         str_ref.current = 'world'
     with raises(ReadOnlyError):
-        str_ref.clear()
+        del str_ref.current
     with raises(ReadOnlyError):
         str_ref.engrave('world')
     assert str_ref.current == 'hello'
@@ -40,7 +40,7 @@ def test_engrave():
 def test_readonly():
     str_ref = Ref.readonly('hello')
     with raises(ReadOnlyError):
-        str_ref.clear()
+        del str_ref.current
     assert str_ref.current == 'hello'
 
 

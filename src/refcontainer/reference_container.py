@@ -33,17 +33,18 @@ class Ref(StrongGeneric[T]):
         self.__check_type(value)
         self.__v = value
 
-    def engrave(self, value: T):
-        self.current = value
-        self.__is_read_only = True
-
-    def clear(self):
+    @current.deleter
+    def current(self):
         if self.__is_read_only:
             raise ReadOnlyError
         try:
             del self.__v
         except AttributeError:
             pass
+
+    def engrave(self, value: T):
+        self.current = value
+        self.__is_read_only = True
 
     def __check_type(self, value: T):
         try:
