@@ -1,8 +1,8 @@
 # std
 from dataclasses import dataclass
-from typing import Any
+from typeguard import check_type
 # local
-from .strong_generic import T, StrongGeneric
+from .strong_generic import T, StrongGeneric, _set_type_constrainst
 
 
 class ReadOnlyError(TypeError):
@@ -13,12 +13,18 @@ class ReadOnlyError(TypeError):
 class Ref(StrongGeneric[T]):
     def __init__(self, value: T = ...):  # type: ignore
         self.__is_read_only = False
+        try:
+            self._type_constraints()
+        except AttributeError:
+            if value is Ellipsis:
+                raise TypeError('Ref value type must be specified either via subscripting or a default value')
+            _set_type_constrainst(self, type(value))
         if value is not Ellipsis:
             self.current = value
 
     @classmethod
     def readonly(cls, value: T):
-        x = cls()
+        x = cls(value)
         x.engrave(value)
         return x
 
@@ -47,11 +53,4 @@ class Ref(StrongGeneric[T]):
         self.__is_read_only = True
 
     def __check_type(self, value: T):
-        try:
-            if not self.__type_ok(value):
-                raise TypeError
-        except AttributeError:
-            self._set_type_constrainst(type(value))
-
-    def __type_ok(self, value: T):
-        return self._type_constraints() is Any or isinstance(value, self._type_constraints())
+        check_type('value', value, self._type_constraints())

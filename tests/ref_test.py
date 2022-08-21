@@ -1,62 +1,71 @@
 # external
-from typing import Any, Callable, List
+from enum import Enum
+from typing import Any, Callable, Container, List, Literal, Type, Union
 from pytest import raises
 # local
 from refcontainer import Ref, ReadOnlyError
 
 
+def test_empty():
+    with raises(TypeError):
+        ref = Ref()
+
+
 def test_starting_value():
-    str_ref = Ref('hello')
-    assert str_ref.current == 'hello'
+    ref = Ref('hello')
+    assert ref.current == 'hello'
 
 
 def test_overwrite():
-    str_ref = Ref('hello')
-    str_ref.current = 'world'
-    assert str_ref.current == 'world'
+    ref = Ref('hello')
+    ref.current = 'world'
+    assert ref.current == 'world'
 
 
 def test_delete():
-    str_ref = Ref('hello')
-    del str_ref.current
+    ref = Ref('hello')
+    del ref.current
     with raises(AttributeError):
-        _ = str_ref.current
-    str_ref.current = 'world'
-    assert str_ref.current == 'world'
+        _ = ref.current
+    ref.current = 'world'
+    assert ref.current == 'world'
 
 
 def test_engrave():
-    str_ref = Ref('')
-    str_ref.engrave('hello')
+    ref = Ref('')
+    ref.engrave('hello')
     with raises(ReadOnlyError):
-        str_ref.current = 'world'
+        ref.current = 'world'
     with raises(ReadOnlyError):
-        del str_ref.current
+        del ref.current
     with raises(ReadOnlyError):
-        str_ref.engrave('world')
-    assert str_ref.current == 'hello'
+        ref.engrave('world')
+    assert ref.current == 'hello'
 
 
 def test_readonly():
-    str_ref = Ref.readonly('hello')
+    ref = Ref.readonly('hello')
     with raises(ReadOnlyError):
-        del str_ref.current
-    assert str_ref.current == 'hello'
+        del ref.current
+    assert ref.current == 'hello'
 
 
 def test_type_change():
-    str_ref = Ref('hello')
+    ref = Ref('hello')
     with raises(TypeError):
-        str_ref.current = 0
+        ref.current = 0
 
 
-def test_tagged():
-    ref = Ref[str | int]('hello')
+def test_tagged_union():
+    ref = Ref[Union[str, int]]('hello')
+    # ref = Ref[str | int]('hello')
     assert ref.current == 'hello'
     ref.current = 'world'
     ref.current = 0
     with raises(TypeError):
-        ref.current = 0.
+        ref.current = []
+    with raises(TypeError):
+        ref.current = lambda: ...
 
 
 def test_any():
@@ -67,22 +76,94 @@ def test_any():
 
 
 def test_empty_constructor():
-    num_ref = Ref[float]()
+    ref = Ref[float]()
     with raises(AttributeError):
-        _ = num_ref.current
-    num_ref.current = 0.
-    assert num_ref.current == 0
+        _ = ref.current
+    ref.current = 0.
+    assert ref.current == 0
     with raises(TypeError):
-        num_ref.current = 'hello'
+        ref.current = 'hello'
+
+
+def test_generic_constraints():
+    ref = Ref[list[str]](['hello'])
+    ref = Ref[list[str]]()
+    ref.current = ['hello']
+    with raises(TypeError):
+        ref.current = 'hello'
 
 
 def test_typing_lib():
-    num_ref = Ref[List]()
-    num_ref.current = []
+    ref = Ref[List]()
+    ref.current = []
     with raises(TypeError):
-        num_ref.current = 'hello'
-    num_ref = Ref[Callable]()
-    num_ref.current = lambda: 'hello'
-    assert num_ref.current() == 'hello'
+        ref.current = 'hello'
+    ref = Ref[Callable]()
+    ref.current = lambda: 'hello'
+    assert ref.current() == 'hello'
     with raises(TypeError):
-        num_ref.current = 'hello'
+        ref.current = 'hello'
+
+
+def test_typing_with_generic():
+    ref = Ref[List[str]](['hello'])
+    with raises(TypeError):
+        ref.current = 'hello'
+    with raises(TypeError):
+        ref.current = [lambda: None]
+    ref = Ref[Callable[[], str]]()
+    with raises(TypeError):
+        ref.current = ['hello']
+    ref.current = lambda: 'hello'
+    ref.current = lambda: None # should not work in an ideal but hard to runtime check
+    with raises(TypeError):
+        ref.current = lambda x: x
+
+
+def test_ellipsis():
+    with raises(TypeError):
+        ref = Ref(...)
+    ref = Ref('hello')
+    with raises(TypeError):
+        ref.current = ...
+
+
+def test_none():
+    ref = Ref(None)
+    ref.current = None
+    with raises(TypeError):
+        ref.current = 'hello'
+
+
+def test_type():
+    # note that it does not work a level deeper, eg. Type[Container[str]] with list[str]
+    ref = Ref[Type[Container]]()
+    ref.current = list
+    ref.current = tuple
+    with raises(TypeError):
+        ref.current = int
+    with raises(TypeError):
+        ref.current = 'hello'
+
+
+def test_literal():
+    ref = Ref[Literal[1, 2, 3]]()
+    ref.current = 1
+    ref.current = 2
+    ref.current = 3
+    with raises(TypeError):
+        ref.current = 4
+
+
+def test_enum():
+    TestEnum = Enum('TestEnum', 'ANT BEE')
+    ref = Ref[TestEnum]()
+    ref.current = TestEnum.ANT
+    ref.current = TestEnum.BEE
+    with raises(TypeError):
+        ref.current = 0
+
+
+def test_empty2():
+    with raises(TypeError):
+        ref = Ref()
